@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WAPOLE STUDIOS</title><style>
 *{box-sizing:border-box}body{margin:0;background:#07080b;color:#fff;font-family:Arial,sans-serif}header{padding:18px 7%;border-bottom:1px solid #222;position:sticky;top:0;background:#07080bee;z-index:5}.brand{font-weight:900}.cyan{color:#19d9ff}.pink{color:#ff78bb}main{max-width:1180px;margin:auto;padding:42px 6%}.hero{padding:30px 0 60px}.k{color:#19d9ff;letter-spacing:3px;font-size:11px;font-weight:800}.hero h1{font-size:clamp(45px,8vw,90px);margin:14px 0;line-height:.95}.hero p{max-width:680px;color:#aaa;line-height:1.7}.btn{padding:12px 18px;border:0;border-radius:8px;background:linear-gradient(90deg,#19d9ff,#ff78bb);color:#000;font-weight:800;cursor:pointer}.box{background:#101217;border:1px solid #262a32;border-radius:15px;padding:22px;margin-bottom:18px}form{display:grid;gap:10px}input,select,textarea{padding:12px;border-radius:8px;background:#080a0e;border:1px solid #2b3038;color:#fff}textarea{min-height:100px}.hidden{display:none}.dashboard{display:grid;grid-template-columns:240px 1fr;gap:18px}.side{position:sticky;top:85px;height:max-content}.side button{width:100%;text-align:left;margin:4px 0;background:#15181f;color:#fff;border:1px solid #282d36}.side button.active{border-color:#19d9ff}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{padding:16px;border:1px solid #292e37;border-radius:11px;background:#101217}.stat b{display:block;font-size:24px;color:#19d9ff;margin-top:7px}.muted{color:#999;font-size:13px}.timeline{border-left:2px solid #2a2d34;padding-left:17px}.event{padding:9px 0}.event b{color:#19d9ff}.row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #252932}.tag{padding:5px 8px;border-radius:99px;background:#1b2028;font-size:11px}.notice{padding:12px;border-radius:9px;background:#171b22;margin:8px 0}.notice.unread{border-left:3px solid #19d9ff}.danger{color:#ff6575}.success{color:#64e88a}@media(max-width:800px){.dashboard{grid-template-columns:1fr}.side{position:static}.grid{grid-template-columns:repeat(2,1fr)}}
 <style>
-.servicegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}.service{padding:18px;border:1px solid #292e37;background:#101217;border-radius:12px;min-height:105px;display:flex;flex-direction:column;justify-content:space-between}.service b{font-size:13px}.service strong,.package strong{color:#19d9ff;font-size:18px}.packagegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}.package{position:relative;padding:24px;border:1px solid #292e37;background:#101217;border-radius:14px;min-height:230px}.package h3{margin-top:0}.package p{color:#aaa;line-height:1.8}.package.recommended{border-color:#19d9ff}.rec{position:absolute;right:14px;top:14px;font-size:9px;padding:5px 7px;border-radius:99px;background:#19d9ff;color:#000;font-weight:900}@media(max-width:900px){.servicegrid{grid-template-columns:repeat(2,1fr)}.packagegrid{grid-template-columns:1fr}}@media(max-width:500px){.servicegrid{grid-template-columns:1fr}}
+.servicegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}.service{padding:18px;border:1px solid #292e37;background:#101217;border-radius:12px;min-height:105px;display:flex;flex-direction:column;justify-content:space-between}.service b{font-size:13px}.service strong,.package strong{color:#19d9ff;font-size:18px}.packagegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}.package{position:relative;padding:24px;border:1px solid #292e37;background:#101217;border-radius:14px;min-height:230px}.package h3{margin-top:0}.package p{color:#aaa;line-height:1.8}.package.recommended{border-color:#19d9ff}.rec{position:absolute;right:14px;top:14px;font-size:9px;padding:5px 7px;border-radius:99px;background:#19d9ff;color:#000;font-weight:900}@media(max-width:900px){.servicegrid{grid-template-columns:repeat(2,1fr)}.packagegrid{grid-template-columns:1fr}}@media(max-width:500px){.servicegrid{grid-template-columns:1fr}.box{padding:16px}.hero{padding-top:15px}header{padding:14px 5%}main{padding:25px 4%}.row{align-items:flex-start;flex-wrap:wrap}.btn{width:100%}}
 </style><style>
 .logo-home{width:min(210px,55vw);height:auto;display:block;margin:10px 0 24px;border-radius:18px}
 .checkgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
@@ -23,6 +23,9 @@
 body.guest-mode header>div{display:none!important}
 body.guest-mode main>section:not(#customerAuth){display:none!important}
 body.guest-mode #customerAuth{display:block!important}
+</style><style>
+body.guest-mode #dash,body.guest-mode #paymentInfo{display:none!important}
+body:not(.guest-mode) #customerAuth{display:none!important}
 </style></head><body class="guest-mode"><header style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
 <span class="brand">WAPOLE <span class="cyan">STUDIOS</span></span>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -90,7 +93,7 @@ body.guest-mode #customerAuth{display:block!important}
   if (!fileInput || !btn) return;
 
   function findOrderId() {
-    const keys = ['orderId','currentOrderId','selectedOrderId','order_id'];
+    const keys = ['wapole_current_order','orderId','currentOrderId','selectedOrderId','order_id'];
     for (const k of keys) {
       try {
         const v = localStorage.getItem(k) || sessionStorage.getItem(k);
@@ -153,7 +156,15 @@ body.guest-mode #customerAuth{display:block!important}
   <h2>YAS LIPA</h2>
   <div style="font-size:28px;font-weight:900;letter-spacing:1px;color:#19d9ff">170137394</div>
   <p style="margin-bottom:0"><b>Jina: FADHILI JACKSON POLE</b></p>
-  <p class="muted">Baada ya kufanya malipo, tumia Order ID yako kuwasilisha payment reference/proof kwenye Customer Dashboard kwa ajili ya verification.</p>
+  <p class="muted">Baada ya kulipa, chagua order yako kisha weka reference ya muamala na jina ulilotumia. Screenshot ni optional.</p>
+  <form id="paymentForm" class="hidden" enctype="multipart/form-data">
+    <select id="paymentOrder" required><option value="">Select Order</option></select>
+    <input id="paymentReference" required placeholder="Transaction Reference / Reference ya Muamala">
+    <input id="payerName" required placeholder="Jina ulilotumia kufanya muamala">
+    <label class="muted">Screenshot ya muamala (Optional)</label>
+    <input id="paymentProof" type="file" accept="image/*">
+    <button class="btn">Submit Payment</button><span id="paymentMsg" class="muted"></span>
+  </form>
 </section>
 
 
@@ -189,11 +200,6 @@ body.guest-mode #customerAuth{display:block!important}
     <h3>Notifications</h3><div id="myNotifications"></div>
     <h3>My Files</h3><div id="myFiles"></div>
   </div>
-</section>
-<section id="accessBox" class="box">
-  <div class="k">FALLBACK ACCESS</div><h2>Order ID + Access Code</h2>
-  <p class="muted">You can still use this option if you need to open an order without logging into your account.</p>
-  <form id="access"><input id="code" required placeholder="Order ID e.g. WPS-000001"><input id="accessCode" required placeholder="Access Code"><button class="btn">Open Order</button></form>
 </section>
 <section id="dash" class="hidden"><div class="dashboard"><aside class="side box"><h3>Order Dashboard</h3><button class="btn active" onclick="tab('overview',this)">Overview</button><button onclick="tab('orders',this)">Order</button><button onclick="tab('payments',this)">Payments</button><button onclick="tab('files',this)">Files</button><button onclick="tab('notifications',this)">Notifications</button><button onclick="closeDash()">Close</button></aside><div>
 <div id="overview" class="tab box"></div><div id="orders" class="tab box hidden"></div><div id="payments" class="tab box hidden"></div><div id="files" class="tab box hidden"></div><div id="notifications" class="tab box hidden"></div>
@@ -243,7 +249,15 @@ async function loadAccount(){
   let d=await api('/api/customer/account');
   document.body.classList.remove('guest-mode');
   $('customerAuth').scrollIntoView({behavior:'smooth'});
-  $('authForms').classList.add('hidden');$('accountArea').classList.remove('hidden');$('customerName').textContent=d.customer.full_name;$('bname').value=d.customer.full_name;$('bphone').value=d.customer.phone;
+  $('authForms').classList.add('hidden');$('accountArea').classList.add('hidden');$('customerName').textContent=d.customer.full_name;$('bname').value=d.customer.full_name;$('bphone').value=d.customer.phone;
+  $('dash').classList.remove('hidden');
+  const po=$('paymentOrder'); po.innerHTML='<option value="">Select Order</option>'+d.orders.map(o=>'<option value="'+esc(o.order_code)+'">'+esc(o.order_code)+' — '+money(o.price)+'</option>').join('');
+  $('paymentForm').classList.remove('hidden');
+  $('overview').innerHTML='<div class="k">CUSTOMER DASHBOARD</div><h2>Welcome, '+esc(d.customer.full_name)+'</h2><div class="grid"><div class="stat">ORDERS<b>'+d.orders.length+'</b></div><div class="stat">DELIVERED<b>'+d.orders.filter(o=>o.status==='DELIVERED').length+'</b></div><div class="stat">NOTIFICATIONS<b>'+d.notifications.filter(n=>!n.read_at).length+'</b></div><div class="stat">FILES<b>'+d.files.length+'</b></div></div>';
+  $('orders').innerHTML='<div class="k">MY ORDERS</div>'+ (d.orders.length?d.orders.map(o=>'<div class="account-order"><div class="row"><b>'+esc(o.order_code)+'</b><span class="tag">'+esc(o.status)+'</span></div><p>'+(()=>{let x=[];try{x=JSON.parse(o.service)}catch{x=[o.service]}return x.map(esc).join(' • ')})()+'<br><b>'+money(o.price)+'</b></p><small class="muted">'+new Date(o.created_at).toLocaleString()+'</small></div>').join(''):'<p class="muted">No orders yet.</p>');
+  $('payments').innerHTML='<div class="k">PAYMENTS</div>'+((d.payments||[]).length?(d.payments||[]).map(p=>'<div class="account-order"><div class="row"><b>'+esc(p.reference)+'</b><span class="tag">'+esc(p.status)+'</span></div><p>'+esc(p.payer_name||'')+'<br>'+money(p.amount)+' · '+esc(p.method)+'</p></div>').join(''):'<p class="muted">No payment submitted yet.</p>');
+  $('files').innerHTML='<div class="k">MY FILES</div>'+ (d.files.length?d.files.map(f=>'<div class="row"><span><b>'+esc(f.original_name)+'</b><br><small class="muted">'+esc(f.kind)+' · '+Math.round(f.size/1024)+' KB</small></span><button class="btn" onclick="downloadAccountFile('+f.id+','+f.order_id+')">Download</button></div>').join(''):'<p class="muted">No files yet.</p>');
+  $('notifications').innerHTML='<div class="k">NOTIFICATIONS</div>'+ (d.notifications.length?d.notifications.map(n=>'<div class="notice '+(!n.read_at?'unread':'')+'"><b>'+esc(n.title)+'</b><br>'+esc(n.message)+'</div>').join(''):'<p class="muted">No notifications.</p>');
   $('accountStats').innerHTML='<div class="stat">ORDERS<b>'+d.orders.length+'</b></div><div class="stat">DELIVERED<b>'+d.orders.filter(o=>o.status==='DELIVERED').length+'</b></div><div class="stat">NOTIFICATIONS<b>'+d.notifications.filter(n=>!n.read_at).length+'</b></div><div class="stat">FILES<b>'+d.files.length+'</b></div>';
   $('myOrders').innerHTML=d.orders.length?d.orders.map(o=>{
     let services=[];try{services=JSON.parse(o.service)}catch{services=[o.service]}
@@ -259,6 +273,8 @@ function logoutCustomer(show=true){
  document.body.classList.add('guest-mode');
  $('authForms').classList.remove('hidden');
  $('accountArea').classList.add('hidden');
+ $('dash').classList.add('hidden');
+ $('paymentForm').classList.add('hidden');
  if(show)alert('You have been logged out.')
 }
 async function downloadAccountFile(id,orderId){
@@ -286,25 +302,20 @@ $('bookingForm').onsubmit=async e=>{
  $('bookingMsg').textContent='Submitting order...';
  try{
   let d=await api('/api/customer/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({services,package:pkg,details:$('bdetails').value,lyrics:$('blyrics').value})});
-  $('bookingMsg').innerHTML='<span class="success">Order placed successfully: <b>'+esc(d.order_code)+'</b> — '+money(d.price)+'</span>';
+  localStorage.setItem('wapole_current_order',d.order_code);$('bookingMsg').innerHTML='<span class="success">Order placed successfully: <b>'+esc(d.order_code)+'</b> — '+money(d.price)+'</span>';
   $('bookingForm').reset();calcTotal();await loadAccount();
  }catch(err){$('bookingMsg').innerHTML='<span class="danger">'+esc(err.message)+'</span>'}
 };
 
-C='';A='';
-$('access').onsubmit=async e=>{e.preventDefault();C=$('code').value.trim();A=$('accessCode').value.trim();await loadFallback()};
-async function loadFallback(){try{D=await api('/api/customer/dashboard');$('accessBox').classList.add('hidden');$('dash').classList.remove('hidden');renderFallback()}catch(e){alert(e.message)}}
-function renderFallback(){
- let o=D.order;
- $('overview').innerHTML='<div class="k">OVERVIEW</div><h2>Welcome, '+esc(o.customer_name)+'</h2><div class="grid"><div class="stat">ORDER<b>'+esc(o.order_code)+'</b></div><div class="stat">STATUS<b>'+esc(o.status)+'</b></div><div class="stat">SERVICE<b>'+esc(o.service)+'</b></div><div class="stat">TOTAL<b>'+money(o.price)+'</b></div></div>';
- $('orders').innerHTML='<div class="k">ORDER</div><h2>'+esc(o.order_code)+'</h2><p>'+esc(o.details)+'</p>';
- $('files').innerHTML='<div class="k">FILES</div><h2>Project Files</h2>'+((D.files||[]).map(f=>'<div class="row"><span>'+esc(f.original_name)+'</span><button class="btn" onclick="download('+f.id+')">Download</button></div>').join('')||'<p class="muted">No files yet.</p>');
- $('notifications').innerHTML='<div class="k">NOTIFICATIONS</div><h2>Notifications</h2>'+((D.notifications||[]).map(n=>'<div class="notice"><b>'+esc(n.title)+'</b><br>'+esc(n.message)+'</div>').join('')||'<p class="muted">No notifications.</p>');
- $('payments').innerHTML='<div class="k">PAYMENTS</div><p class="muted">Payment records are available in this order dashboard.</p>';
-}
-function tab(id,b){document.querySelectorAll('.tab').forEach(x=>x.classList.add('hidden'));$(id).classList.remove('hidden');document.querySelectorAll('.side button').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
-function closeDash(){$('dash').classList.add('hidden');$('accessBox').classList.remove('hidden')}
-async function download(id){let r=await fetch('/api/customer/files/'+id+'/download',{headers:{'x-order-code':C,'x-access-code':A}});if(!r.ok)return alert('Download failed');let b=await r.blob(),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='file';a.click();URL.revokeObjectURL(u)}
+$('paymentForm').onsubmit=async e=>{
+ e.preventDefault();
+ if(!customerToken){return}
+ const f=new FormData();f.append('order_code',$('paymentOrder').value);f.append('reference',$('paymentReference').value.trim());f.append('payer_name',$('payerName').value.trim());
+ if($('paymentProof').files[0])f.append('proof',$('paymentProof').files[0]);
+ $('paymentMsg').textContent='Submitting payment...';
+ try{let d=await api('/api/customer/payments',{method:'POST',body:f});$('paymentMsg').innerHTML='<span class="success">Payment submitted for verification.</span>';$('paymentReference').value='';$('payerName').value='';$('paymentProof').value='';await loadAccount()}catch(err){$('paymentMsg').innerHTML='<span class="danger">'+esc(err.message)+'</span>'}
+};
+
 if(customerToken)loadAccount();
 </script>
 
