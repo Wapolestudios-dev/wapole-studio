@@ -1,0 +1,8 @@
+WAPOLE STUDIOS v15 FINAL
+Customer accounts are integrated into the frontend/backend workflow.
+- Register and login use the existing bcrypt + JWT backend.
+- Logged-in customers can place multi-service/package orders.
+- Orders are linked to customer_id.
+- Customer account dashboard lists all orders, notifications and files.
+- Admin delivery files are visible to the owning customer and downloadable through authenticated account endpoint.
+- Order ID + Access Code remains as fallback.
