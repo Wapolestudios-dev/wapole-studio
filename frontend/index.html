@@ -26,7 +26,24 @@ body.guest-mode #customerAuth{display:block!important}
 </style><style>
 body.guest-mode #dash,body.guest-mode #paymentInfo{display:none!important}
 body:not(.guest-mode) #customerAuth{display:none!important}
-</style></head><body class="guest-mode"><header style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+</style>
+<style id="guest-auth-first">
+body.guest-auth-first > * { display:none !important; }
+body.guest-auth-first > #customerAuth {
+  display:block !important;
+  max-width:720px;
+  margin:8vh auto !important;
+  padding:18px;
+}
+body.guest-auth-first #authForms { display:grid !important; }
+body.guest-auth-first #accountArea { display:none !important; }
+@media (max-width:700px){
+  body.guest-auth-first > #customerAuth { margin:3vh 12px !important; }
+  body.guest-auth-first #authForms { grid-template-columns:1fr !important; }
+}
+</style>
+
+</head><body class="guest-mode"><header style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
 <span class="brand">WAPOLE <span class="cyan">STUDIOS</span></span>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
 <a class="btn" href="#booking" style="text-decoration:none">BOOKING</a>
@@ -188,6 +205,7 @@ async function loadAccount(){
  try{
   let d=await api('/api/customer/account');
   D=d;
+  document.body.classList.remove('guest-auth-first');
   document.body.classList.remove('guest-mode');
   $('customerAuth').scrollIntoView({behavior:'smooth'});
   $('authForms').classList.add('hidden');$('accountArea').classList.add('hidden');$('customerName').textContent=d.customer.full_name;$('bname').value=d.customer.full_name;$('bphone').value=d.customer.phone;
