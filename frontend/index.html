@@ -70,6 +70,74 @@
     <h3>Or Choose a Package</h3>
     <select id="bpackage"><option value="">No package</option><option value="Starter Package" data-price="100000">Starter — TZS 100,000</option><option value="Artist Package" data-price="150000">Artist — TZS 150,000</option><option value="Premium Package" data-price="300000">Premium — TZS 300,000</option></select>
     <div id="lyricsBox"><label for="blyrics"><b>Lyrics for Lyrics Video</b></label><textarea id="blyrics" placeholder="Paste or type the complete lyrics here"></textarea></div>
+<!-- WAPOLE CUSTOMER AUDIO UPLOAD: added without changing existing UI -->
+<section id="customer-audio-upload" style="margin:20px 0;padding:18px;border:1px solid #ddd;border-radius:12px;">
+  <h3>Upload Your Audio</h3>
+  <p style="margin-top:6px;">Chagua audio yako (MP3/WAV) uitume kwa order yako.</p>
+  <input id="customerAudioFile" type="file" accept="audio/mpeg,audio/wav,audio/x-wav,audio/*">
+  <button id="customerAudioUploadBtn" type="button" style="margin-top:10px;">Upload Audio</button>
+  <div id="customerAudioUploadStatus" style="margin-top:10px;"></div>
+</section>
+<script>
+(function () {
+  const fileInput = document.getElementById('customerAudioFile');
+  const btn = document.getElementById('customerAudioUploadBtn');
+  const status = document.getElementById('customerAudioUploadStatus');
+  if (!fileInput || !btn) return;
+
+  function findOrderId() {
+    const keys = ['orderId','currentOrderId','selectedOrderId','order_id'];
+    for (const k of keys) {
+      try {
+        const v = localStorage.getItem(k) || sessionStorage.getItem(k);
+        if (v) return v;
+      } catch(e) {}
+    }
+    const el = document.querySelector('[data-order-id]');
+    if (el && el.dataset.orderId) return el.dataset.orderId;
+    return null;
+  }
+
+  btn.addEventListener('click', async function () {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) {
+      status.textContent = 'Tafadhali chagua audio kwanza.';
+      return;
+    }
+
+    const orderId = findOrderId();
+    if (!orderId) {
+      status.textContent = 'Order haijapatikana. Fungua order yako kwanza kisha ujaribu tena.';
+      return;
+    }
+
+    const form = new FormData();
+    form.append('orderId', orderId);
+    form.append('files', file);
+
+    btn.disabled = true;
+    status.textContent = 'Inapakia audio...';
+
+    try {
+      const res = await fetch('/api/customer/files', {
+        method: 'POST',
+        body: form,
+        credentials: 'include'
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || data.error || 'Upload imeshindikana.');
+
+      status.textContent = 'Audio imepakiwa kikamilifu.';
+      fileInput.value = '';
+    } catch (err) {
+      status.textContent = err.message || 'Upload imeshindikana.';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+<!-- END WAPOLE CUSTOMER AUDIO UPLOAD -->
     <textarea id="bdetails" required placeholder="Describe your order / project requirements"></textarea>
     <div class="box" style="margin:0;background:#0b0e13"><b>ORDER TOTAL: <span id="orderTotal" class="cyan">TZS 0</span></b></div>
     <button class="btn">Place Order</button><span id="bookingMsg" class="muted"></span>
@@ -225,4 +293,7 @@ function tab(id,b){document.querySelectorAll('.tab').forEach(x=>x.classList.add(
 function closeDash(){$('dash').classList.add('hidden');$('accessBox').classList.remove('hidden')}
 async function download(id){let r=await fetch('/api/customer/files/'+id+'/download',{headers:{'x-order-code':C,'x-access-code':A}});if(!r.ok)return alert('Download failed');let b=await r.blob(),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='file';a.click();URL.revokeObjectURL(u)}
 if(customerToken)loadAccount();
-</script></body></html>
+</script>
+
+
+</body></html>
