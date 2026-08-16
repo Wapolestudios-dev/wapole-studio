@@ -19,7 +19,11 @@
 @media(max-width:500px){.contactgrid{grid-template-columns:1fr}}
 </style><style>
 .auth-hidden{display:none!important}.account-order{padding:14px;border:1px solid #292e37;border-radius:11px;background:#101217;margin:8px 0}.account-order .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-</style></head><body><header style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+</style><style>
+body.guest-mode header>div{display:none!important}
+body.guest-mode main>section:not(#customerAuth){display:none!important}
+body.guest-mode #customerAuth{display:block!important}
+</style></head><body class="guest-mode"><header style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
 <span class="brand">WAPOLE <span class="cyan">STUDIOS</span></span>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
 <a class="btn" href="#booking" style="text-decoration:none">BOOKING</a>
@@ -236,7 +240,9 @@ async function loginCustomer(e){
 async function loadAccount(){
  if(!customerToken)return;
  try{
-  let d=await api('/api/customer/account');$('customerAuth').scrollIntoView({behavior:'smooth'});
+  let d=await api('/api/customer/account');
+  document.body.classList.remove('guest-mode');
+  $('customerAuth').scrollIntoView({behavior:'smooth'});
   $('authForms').classList.add('hidden');$('accountArea').classList.remove('hidden');$('customerName').textContent=d.customer.full_name;$('bname').value=d.customer.full_name;$('bphone').value=d.customer.phone;
   $('accountStats').innerHTML='<div class="stat">ORDERS<b>'+d.orders.length+'</b></div><div class="stat">DELIVERED<b>'+d.orders.filter(o=>o.status==='DELIVERED').length+'</b></div><div class="stat">NOTIFICATIONS<b>'+d.notifications.filter(n=>!n.read_at).length+'</b></div><div class="stat">FILES<b>'+d.files.length+'</b></div>';
   $('myOrders').innerHTML=d.orders.length?d.orders.map(o=>{
@@ -247,7 +253,14 @@ async function loadAccount(){
   $('myFiles').innerHTML=d.files.length?d.files.map(f=>'<div class="row"><span><b>'+esc(f.original_name)+'</b><br><small class="muted">'+esc(f.kind)+' · '+Math.round(f.size/1024)+' KB</small></span><button class="btn" onclick="downloadAccountFile('+f.id+','+f.order_id+')">Download</button></div>').join(''):'<p class="muted">No files yet. Completed work sent by Admin will appear here.</p>';
  }catch(e){logoutCustomer(false)}
 }
-function logoutCustomer(show=true){customerToken='';localStorage.removeItem('wapole_customer_token');$('authForms').classList.remove('hidden');$('accountArea').classList.add('hidden');if(show)alert('You have been logged out.')}
+function logoutCustomer(show=true){
+ customerToken='';
+ localStorage.removeItem('wapole_customer_token');
+ document.body.classList.add('guest-mode');
+ $('authForms').classList.remove('hidden');
+ $('accountArea').classList.add('hidden');
+ if(show)alert('You have been logged out.')
+}
 async function downloadAccountFile(id,orderId){
  // Account downloads are authorized through the logged-in customer token.
  let r=await fetch('/api/customer/account/files/'+id+'/download',{headers:{Authorization:'Bearer '+customerToken}});
