@@ -1,5 +1,5 @@
-const express=require('express'),path=require('path'),fs=require('fs'),crypto=require('crypto');
-const bcrypt=require('bcryptjs'),jwt=require('jsonwebtoken'),rateLimit=require('express-rate-limit'),multer=require('multer'),Database=require('better-sqlite3');
+ express=require('express'),path=require('path'),fs=require('fs'),crypto=require('crypto');
+const bcrconstypt=require('bcryptjs'),jwt=require('jsonwebtoken'),rateLimit=require('express-rate-limit'),multer=require('multer'),Database=require('better-sqlite3');
 const app=express(),PORT=process.env.PORT||3000,ROOT=path.join(__dirname,'..'),STORAGE=path.join(ROOT,'storage');
 const SECRET=process.env.JWT_SECRET||'CHANGE_THIS_SECRET_IN_PRODUCTION',ADMIN_USER=process.env.ADMIN_USER||'admin',ADMIN_PASS=process.env.ADMIN_PASS||'wapole2026';
 fs.mkdirSync(STORAGE,{recursive:true});const db=new Database(path.join(__dirname,'wapole.db'));db.pragma('journal_mode=WAL');
@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS notifications(id INTEGER PRIMARY KEY AUTOINCREMENT,or
 CREATE TABLE IF NOT EXISTS order_events(id INTEGER PRIMARY KEY AUTOINCREMENT,order_id INTEGER NOT NULL,status TEXT NOT NULL,note TEXT,created_at TEXT NOT NULL,FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE);
 `);
 try{db.exec('ALTER TABLE orders ADD COLUMN customer_id INTEGER');}catch(e){if(!String(e.message).includes('duplicate column'))throw e}
-try{db.exec('ALTER TABLE payments ADD COLUMN payer_name TEXT');}catch(e){if(!String(e.message).includes('duplicate column'))throw e}
 if(!db.prepare('SELECT id FROM admins WHERE username=?').get(ADMIN_USER))db.prepare('INSERT INTO admins(username,password_hash,created_at) VALUES(?,?,?)').run(ADMIN_USER,bcrypt.hashSync(ADMIN_PASS,12),new Date().toISOString());
 const prices={'Logo Designing':50000,'Poster Designing':30000,'Music Cover Artwork':20000,'Album Cover Artwork':50000,'Lyrics Video':30000,'Ticket / Promo Kit':15000,'Music Distribution':50000,'Starter Package':100000,'Artist Package':150000,'Premium Package':300000};
 const STAT=['PENDING','PAYMENT VERIFICATION','PAYMENT VERIFIED','PROCESSING','REVISION REQUESTED','COMPLETED','DELIVERED','CLOSED'];
@@ -96,14 +95,12 @@ app.get('/api/customer/account',customerAuth,(req,res)=>{
   const ids=orders.map(o=>o.id);
   let notifications=[];
   let files=[];
-  let payments=[];
   if(ids.length){
     const q=ids.map(()=>'?').join(',');
     notifications=db.prepare(`SELECT id,order_id,title,message,created_at,read_at FROM notifications WHERE order_id IN (${q}) ORDER BY id DESC`).all(...ids);
     files=db.prepare(`SELECT id,order_id,original_name,mime_type,size,kind,uploaded_at FROM files WHERE order_id IN (${q}) ORDER BY id DESC`).all(...ids);
-    payments=db.prepare(`SELECT id,order_id,reference,amount,method,payer_name,status,note,created_at,updated_at FROM payments WHERE order_id IN (${q}) ORDER BY id DESC`).all(...ids);
   }
-  res.json({customer:{id:c.id,full_name:c.full_name,phone:c.phone,email:c.email,location:c.location},orders,notifications,files,payments});
+  res.json({customer:{id:c.id,full_name:c.full_name,phone:c.phone,email:c.email,location:c.location},orders,notifications,files});
 });
 app.post('/api/admin/login',limiter,(req,res)=>{let {username,password}=req.body||{},a=db.prepare('SELECT * FROM admins WHERE username=?').get(username||'');if(!a||!bcrypt.compareSync(password||'',a.password_hash))return res.status(401).json({error:'Invalid username or password'});res.json({token:jwt.sign({id:a.id,username:a.username},SECRET,{expiresIn:'8h'}),username:a.username})});
 app.post('/api/orders',(req,res)=>{
@@ -132,41 +129,11 @@ app.post('/api/orders',(req,res)=>{
 app.get('/api/customer/dashboard',customer,(req,res)=>{let o=req.order,files=db.prepare('SELECT id,original_name,mime_type,size,kind,uploaded_at FROM files WHERE order_id=? ORDER BY id DESC').all(o.id),payments=db.prepare('SELECT id,reference,amount,method,status,note,created_at,updated_at FROM payments WHERE order_id=? ORDER BY id DESC').all(o.id),events=db.prepare('SELECT status,note,created_at FROM order_events WHERE order_id=? ORDER BY id ASC').all(o.id),notes=db.prepare('SELECT id,title,message,created_at,read_at FROM notifications WHERE order_id=? ORDER BY id DESC').all(o.id);res.json({order:{order_code:o.order_code,customer_name:o.customer_name,phone:o.phone,service:o.service,price:o.price,details:o.details,status:o.status,created_at:o.created_at,updated_at:o.updated_at},files,payments,events,notifications:notes})});
 app.patch('/api/customer/notifications/:id/read',customer,(req,res)=>{db.prepare('UPDATE notifications SET read_at=? WHERE id=? AND order_id=?').run(new Date().toISOString(),req.params.id,req.order.id);res.json({success:true})});
 const upload=multer({storage:multer.diskStorage({destination:(req,f,cb)=>{let d=path.join(STORAGE,req.order.order_code);fs.mkdirSync(d,{recursive:true});cb(null,d)},filename:(req,f,cb)=>cb(null,Date.now()+'-'+crypto.randomBytes(4).toString('hex')+'-'+path.basename(f.originalname).replace(/[^a-zA-Z0-9._-]/g,'_'))}),limits:{fileSize:100*1024*1024,files:5}});
-const customerIncoming=multer({storage:multer.diskStorage({destination:(req,f,cb)=>{let d=path.join(STORAGE,'_incoming');fs.mkdirSync(d,{recursive:true});cb(null,d)},filename:(req,f,cb)=>cb(null,Date.now()+'-'+crypto.randomBytes(4).toString('hex')+'-'+path.basename(f.originalname).replace(/[^a-zA-Z0-9._-]/g,'_'))}),limits:{fileSize:100*1024*1024,files:1}});
-
-app.post('/api/customer/payments',customerAuth,customerIncoming.single('proof'),(req,res)=>{
-  let orderCode=cleanText(req.body?.order_code,60),reference=cleanText(req.body?.reference,120),payerName=cleanText(req.body?.payer_name,120);
-  let o=db.prepare('SELECT * FROM orders WHERE order_code=? AND customer_id=?').get(orderCode,req.customer.id);
-  if(!o)return res.status(404).json({error:'Order not found'});
-  if(!reference||!payerName)return res.status(400).json({error:'Transaction reference and payer name are required'});
-  let proofId=null,now=new Date().toISOString();
-  if(req.file){let dest=path.join(STORAGE,o.order_code);fs.mkdirSync(dest,{recursive:true});let stored=path.basename(req.file.filename);fs.renameSync(req.file.path,path.join(dest,stored));req.file.filename=stored;let r=db.prepare('INSERT INTO files(order_id,original_name,stored_name,mime_type,size,kind,uploaded_at) VALUES(?,?,?,?,?,?,?)').run(o.id,req.file.originalname,stored,req.file.mimetype,req.file.size,'PAYMENT_PROOF',now);proofId=r.lastInsertRowid;}
-  let r=db.prepare('INSERT INTO payments(order_id,reference,amount,method,proof_file_id,payer_name,status,note,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)').run(o.id,reference,o.price,'YAS LIPA',proofId,payerName,'PENDING','Payment submitted by customer',now,now);
-  db.prepare('UPDATE orders SET status=?,updated_at=? WHERE id=?').run('PAYMENT VERIFICATION',now,o.id);
-  event(o.id,'PAYMENT VERIFICATION','Payment submitted by customer.');
-  notify(o.id,'Payment submitted','Your payment is awaiting verification.');
-  res.status(201).json({success:true,payment:{id:r.lastInsertRowid,status:'PENDING'}});
-});
-
-app.post('/api/customer/files',customerAuth,customerIncoming.single('file'),(req,res)=>{
-  let orderCode=cleanText(req.body?.order_code,60),o=db.prepare('SELECT * FROM orders WHERE order_code=? AND customer_id=?').get(orderCode,req.customer.id);
-  if(!o){if(req.file&&fs.existsSync(req.file.path))fs.unlinkSync(req.file.path);return res.status(404).json({error:'Order not found'});}
-  if(!req.file)return res.status(400).json({error:'Choose an audio file'});
-  if(!/^audio\//i.test(req.file.mimetype) && !/\.(mp3|wav|m4a|aac|ogg|flac)$/i.test(req.file.originalname)){fs.unlinkSync(req.file.path);return res.status(400).json({error:'Only audio files are allowed'});}
-  let now=new Date().toISOString(),dest=path.join(STORAGE,o.order_code);fs.mkdirSync(dest,{recursive:true});let stored=path.basename(req.file.filename);fs.renameSync(req.file.path,path.join(dest,stored));
-  let r=db.prepare('INSERT INTO files(order_id,original_name,stored_name,mime_type,size,kind,uploaded_at) VALUES(?,?,?,?,?,?,?)').run(o.id,req.file.originalname,stored,req.file.mimetype,req.file.size,'CUSTOMER_REFERENCE',now);
-  notify(o.id,'Audio uploaded',`Your audio file ${req.file.originalname} was uploaded successfully.`);
-  res.status(201).json({files:[{id:r.lastInsertRowid,name:req.file.originalname}]});
-});
+app.post('/api/customer/files',customer,(req,res)=>upload.array('files',5)(req,res,e=>{if(e)return res.status(400).json({error:e.message});let now=new Date().toISOString(),ins=db.prepare('INSERT INTO files(order_id,original_name,stored_name,mime_type,size,kind,uploaded_at) VALUES(?,?,?,?,?,?,?)');let out=(req.files||[]).map(f=>{let r=ins.run(req.order.id,f.originalname,f.filename,f.mimetype,f.size,'CUSTOMER_REFERENCE',now);return{id:r.lastInsertRowid,name:f.originalname}});res.json({files:out})}));
 app.get('/api/customer/files/:id/download',customer,(req,res)=>{let f=db.prepare('SELECT * FROM files WHERE id=? AND order_id=?').get(req.params.id,req.order.id);if(!f)return res.status(404).json({error:'File not found'});let base=path.resolve(STORAGE,req.order.order_code),p=path.resolve(base,f.stored_name);
 if(!p.startsWith(base+path.sep)||!fs.existsSync(p))return res.status(404).json({error:'File missing'});
 res.download(p,f.original_name)});
 
-app.patch('/api/customer/account/notifications/:id/read',customerAuth,(req,res)=>{
-  let n=db.prepare('SELECT n.id FROM notifications n JOIN orders o ON o.id=n.order_id WHERE n.id=? AND o.customer_id=?').get(req.params.id,req.customer.id);
-  if(!n)return res.status(404).json({error:'Notification not found'});
-  db.prepare('UPDATE notifications SET read_at=? WHERE id=?').run(new Date().toISOString(),n.id);res.json({success:true});
-});
 app.get('/api/customer/account/files/:id/download',customerAuth,(req,res)=>{
   let f=db.prepare('SELECT f.*,o.order_code FROM files f JOIN orders o ON o.id=f.order_id WHERE f.id=? AND o.customer_id=?').get(req.params.id,req.customer.id);
   if(!f)return res.status(404).json({error:'File not found'});
